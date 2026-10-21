@@ -190,7 +190,7 @@ def create_app(settings=None, embedding=None):
     settings = settings or load_settings()
     settings = replace(settings, public=public_mode())
     runtime = Runtime(settings, embedding)
-    api = FastAPI(title="Scene & Source", version="2.1.0")
+    api = FastAPI(title="Scene & Source", version="2.1.1")
     api.state.runtime = runtime
 
     @api.middleware("http")
@@ -234,7 +234,7 @@ def create_app(settings=None, embedding=None):
     @api.get("/api/status")
     def status():
         return {"gms_available": gms_available(), "movie_count": len(runtime.movies),
-                "embedding": settings.embedding_model, "version": "2.1.0",
+                "embedding": settings.embedding_model, "version": "2.1.1",
                 "pdf_count": len(records(settings.root)), "local_only": not public_mode(),
                 "public_demo": public_mode(), "source_mode": "live" if public_mode() else settings.source_mode,
                 "admin_features": not public_mode(), "default_mode": "gms" if gms_available() else "local",

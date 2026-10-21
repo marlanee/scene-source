@@ -83,8 +83,8 @@ function researchHTML(message, index) {
     '<small>뉴스·블로그를 포함한 인터넷 자료를 별도로 찾아봅니다.</small>'+
     '<section id="research-'+index+'" class="research-results" aria-label="인터넷 추가 확인 자료"'+(expanded?'':' hidden')+'>'+
     (result?'<h3>인터넷에서 더 읽어볼 자료</h3><p class="research-notice">'+esc(result.notice)+'</p><p class="muted">검색어: '+esc((result.queries||[]).join(' / '))+'<br>검색 시각: '+esc(new Date(result.searched_at).toLocaleString())+(result.cache_hit?' · 최근 검색 결과 재사용':'')+'</p>'+
-      (result.partial?'<p class="research-notice">일부 검색 출처에 연결하지 못해 확보한 자료만 표시합니다.</p>':'')+
-      (result.items.length?result.items.map(item=>'<article class="web-result"><div class="source-tag">웹 검색 자료 · '+esc(item.domain)+'</div><a class="source-title" href="'+esc(safeUrl(item.url))+'" target="_blank" rel="noopener noreferrer">'+esc(item.title)+' ↗</a><p>'+esc(item.snippet)+'</p><span class="muted">검색엔진 요약 · 본문 전체 미확인</span><p class="reading-reason">AI가 고른 이유: '+esc(item.reason)+'</p></article>').join(''):'<p>질문과 관련된 추가 자료를 찾지 못했습니다. 기존 답변과 인용 근거를 확인해 주세요.</p>'):'')+'</section></div>';
+      (result.partial?'<p class="research-notice">추가 검색이 일부 완료되지 않아 확보한 자료만 표시합니다.</p>':'')+
+      (result.items.length?result.items.map(item=>'<article class="web-result"><div class="source-tag">웹 검색 자료 · '+esc(item.domain)+'</div><a class="source-title" href="'+esc(safeUrl(item.url))+'" target="_blank" rel="noopener noreferrer">'+esc(item.title)+' ↗</a><p>'+esc(item.snippet)+'</p><span class="muted">'+esc(item.snippet_kind||"AI 자료 요약 · 원문 확인 필요")+'</span><p class="reading-reason">AI가 고른 이유: '+esc(item.reason)+'</p></article>').join(''):'<p>질문과 관련된 추가 자료를 찾지 못했습니다. 기존 답변과 인용 근거를 확인해 주세요.</p>'):'')+'</section></div>';
 }
 function renderChat() {
   const history = state.history[key()] || [];
@@ -303,7 +303,7 @@ async function init() {
       help.querySelector("h2").textContent="공개 체험 안내";
       const paragraphs=help.querySelectorAll("p");
       paragraphs[0].textContent="검색·답변·추가 확인은 접속 환경별 시간당 "+state.status.hourly_request_limit+"회까지 요청할 수 있습니다. 서버 전체 AI 호출은 하루 "+state.status.daily_model_call_limit+"회까지이며, 한 요청에 여러 호출이 필요할 수 있습니다. 추가 자료는 최근 검색 결과를 재사용할 수 있습니다.";
-      paragraphs[1].textContent="의미 검색에는 검색어·문서, 답변 생성에는 질문·최근 대화·근거를 AI 제공 서비스로 전송합니다. 추가 확인은 AI가 만든 검색어를 외부 검색 서비스에, 검색 요약을 AI 제공 서비스에 전송합니다. 개인 정보나 비밀은 질문에 넣지 마세요. 자료 변경과 사람 채점은 로컬 버전에서 제공합니다.";
+      paragraphs[1].textContent="의미 검색에는 검색어·문서, 답변 생성에는 질문·최근 대화·근거를 AI 제공 서비스로 전송합니다. 추가 확인에는 영화와 질문·필요한 최근 대화를 AI 웹 검색 서비스에 전송합니다. 개인 정보나 비밀은 질문에 넣지 마세요. 자료 변경과 사람 채점은 로컬 버전에서 제공합니다.";
     } else if (state.status.gms_available) {
       help.querySelector("p").textContent="AI가 연결되어 있습니다. 검색한 근거를 바탕으로 AI 답변과 사실 확인을 사용할 수 있습니다.";
     }

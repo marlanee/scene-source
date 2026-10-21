@@ -20,6 +20,3 @@ fastapi==0.141.1
 uvicorn[standard]==0.52.4
 pydantic==2.13.5
 pypdf==6.21.1
-# General web search, no separate paid search API key required.
-ddgs==9.9.3
-primp==0.15.0

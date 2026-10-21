@@ -90,3 +90,24 @@ class GMSClient:
                 system += "\n앞선 출력 형식 검증이 실패했다. 지정된 JSON 구조와 필드 타입을 정확히 지켜라."
                 if isinstance(exc, ValidationError):
                     system += "\n오류 필드/유형: " + json.dumps([{"field": e["loc"], "type": e["type"]} for e in exc.errors()], ensure_ascii=False)
+
+    def web_search(self, instructions: str, payload: str) -> dict:
+        """Native web tool; return its source records, never pretend text URLs are searches."""
+        from openai import OpenAI
+        before = getattr(self, "before_request", None)
+        if before:
+            before()
+        try:
+            with OpenAI(api_key=os.environ["GMS_KEY"],
+                        base_url=os.getenv("GMS_BASE_URL", "https://gms.ssafy.io/gmsapi/api.openai.com/v1/"),
+                        timeout=80, max_retries=1) as client:
+                response = client.responses.create(model=os.getenv("GMS_MODEL", "gpt-6-luna"),
+                    instructions=instructions, input=payload, store=False,
+                    tools=[{"type":"web_search", "search_context_size":"low"}],
+                    tool_choice="required", max_tool_calls=2,
+                    include=["web_search_call.action.sources"])
+            self.calls = getattr(self, "calls", 0) + 1
+            self.usage = getattr(self, "usage", []) + [response.usage.model_dump() if response.usage else None]
+            return response.model_dump()
+        except Exception:
+            raise UserFacingError("인터넷 추가 확인에 연결하지 못했습니다. 기존 답변은 유지됩니다. 잠시 후 다시 시도해 주세요.") from None
