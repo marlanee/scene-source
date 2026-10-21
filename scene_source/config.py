@@ -73,8 +73,8 @@ def load_settings(root: Path = ROOT) -> Settings:
     if os.getenv("SCENE_PUBLIC") == "1":
         args["source_mode"] = "live"
         args["public"] = True
-        args["embedding_model"] = os.getenv("PUBLIC_EMBEDDING_MODEL", "scene-source/multilingual-minilm-int8")
-        args["batch_size"] = 2
+        args["embedding_model"] = os.getenv("PUBLIC_EMBEDDING_MODEL", "gms/text-embedding-3-small@384")
+        args["batch_size"] = 128
         args["threads"] = 1
     if (root / "public_data/movies.json").exists() and not (root / "data/source_pack.zip").exists() and not (root.parent / "영화도메인_데이터_배포용.zip").exists():
         args["source_mode"] = "live"

@@ -67,7 +67,7 @@ class PublicQuota:
     def before_model_call(self):
         day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         limit = max(1, int(os.getenv("GMS_DAILY_CALL_LIMIT", "100")))
-        self.take("gms:" + day, limit, "오늘의 공개 체험 AI 사용량을 모두 사용했습니다. 로컬 원문 검색을 이용하거나 내일 다시 방문해 주세요.")
+        self.take("gms:" + day, limit, "오늘의 공개 검색·답변 사용량을 모두 사용했습니다. 영화 목록·비교 기록·PDF 자료를 열람하거나 내일 다시 방문해 주세요.")
 
     def request(self, client_ip, use_gms):
         # Hash IP addresses before persistence. A new cookie does not reset the IP quota.
@@ -77,4 +77,4 @@ class PublicQuota:
         if use_gms:
             hour = int(time.time()) // 3600
             self.take(f"visitor-gms:{identity}:{hour}", int(os.getenv("GMS_HOURLY_REQUEST_LIMIT", "3")),
-                      "공개 AI 체험은 접속 환경별 시간당 3회까지 가능합니다. 로컬 원문 검색은 계속 이용할 수 있습니다.")
+                      "공개 검색·답변은 접속 환경별 시간당 3회까지 가능합니다. 영화 목록·비교 기록·PDF 자료는 계속 열람할 수 있습니다.")

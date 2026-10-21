@@ -18,9 +18,11 @@ Python 3.12에서 setup.ps1 실행 후 .env.example을 참고해 .env를 설정�
 
 Render에서 이 저장소를 Docker Web Service로 연결합니다. /healthz로 상태를 확인합니다. GMS_KEY는 서버의 비밀 설정에만 넣고, GMS_MODEL, WIKI_CONTACT, SCENE_PUBLIC=1을 설정합니다. 앱 주소는 Render의 RENDER_EXTERNAL_URL 또는 APP_PUBLIC_URL을 사용합니다.
 
-로컬 모델은 기본 MiniLM, 공개 서버는 같은 계열 INT8 모델·1스레드·작은 배치로 실행합니다. 빌드에서 공개 데이터 색인을 준비하고 런타임에 복사합니다. 한 프로세스·한 worker로 실행합니다. 실제 Render 무료 512MB 서버는 모델 적재 도중 메모리를 초과해 종료됐습니다. 같은 Render 이미지 빌드에서는 모델 적재 최대 약 674MiB가 기록됐으므로 512MB 요금제로 전체 검색 기능을 운영할 수 있다고 주장하지 않습니다. 서버 메모리와 비용은 운영자가 결정해야 합니다. render.yaml의 free 설정은 유료 결제를 자동 신청하지 않기 위해 유지했습니다.
+로컬 설치는 다국어 MiniLM을 사용하고, 공개 서버는 GMS text-embedding-3-small의 384차원 임베딩을 사용합니다. 공개 서버에는 무거운 모델을 적재하지 않습니다. 공개 영화 카탈로그·NASA 본문·두 공개 점검 질문의 실제 벡터를 미리 준비해 키 없이 이미지를 빌드합니다. 새 질문·선별 문서는 서버에서 임베딩하고 해시 기반 SQLite 캐시를 재사용합니다. 서로 다른 모델의 컬렉션은 분리합니다.
 
-무료 서버의 임시 파일은 재시작 시 사라질 수 있습니다. 영구 저장이 필요하면 /app/data에 영구 볼륨을 연결하세요. 공개 서버는 PDF 업로드/삭제와 평가 실행을 차단하고 결과 열람만 제공합니다. GMS 호출 상한 기본 100회/UTC 일, 접속 환경별 AI 요청은 시간당 3회입니다. 상한은 SDK 논리 호출 기준이며 공급자 내부 재시도는 별도일 수 있습니다.
+공개 서버의 임베딩 요청과 답변 생성은 같은 하루 논리 호출 상한에 포함됩니다. 원문 발췌 모드도 의미 검색에는 GMS를 사용하므로 API 한도의 영향을 받습니다. API 키는 Render의 서버 비밀 변수에만 저장합니다.
+
+무료 서버의 임시 파일은 재시작 시 사라질 수 있습니다. 영구 저장이 필요하면 /app/data에 영구 볼륨을 연결하세요. 공개 서버는 PDF 업로드/삭제와 평가 실행을 차단하고 결과 열람만 제공합니다. GMS 호출 상한 기본 100회/UTC 일, 접속 환경별 검색·답변 요청은 시간당 3회입니다. 상한은 논리 호출 기준이며 재시도에 따른 실제 공급자 요청 수는 더 많을 수 있습니다.
 
 ## 데이터·출처
 
@@ -30,4 +32,4 @@ Render에서 이 저장소를 Docker Web Service로 연결합니다. /healthz로
 
 ## 검증
 
-pytest tests/test_core.py tests/test_gms_contract.py tests/test_advanced.py tests/test_finish.py는 API 키 없이 계약을 검사합니다. verify_complete.py --run-api와 verify_gms.py --run-api --compare는 실제 GMS 사용량이 발생합니다. 사람의 셀프/상호 점검 기록은 가상으로 채우지 않습니다.
+python -m pytest tests/test_core.py tests/test_gms_contract.py tests/test_advanced.py tests/test_finish.py tests/test_remote_embeddings.py는 API 키 없이 계약을 검사합니다. verify_complete.py --run-api와 verify_gms.py --run-api --compare는 실제 GMS 사용량이 발생합니다. 사람의 셀프/상호 점검 기록은 가상으로 채우지 않습니다.

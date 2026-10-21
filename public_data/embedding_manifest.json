@@ -1,0 +1,45 @@
+{
+  "model": "gms/text-embedding-3-small@384",
+  "dimensions": 384,
+  "inputs": 973,
+  "catalog_inputs": 964,
+  "official_pdf_inputs": 7,
+  "smoke_query_inputs": 2,
+  "sha256": "6e5c4c1a95e2306b732815b6f62cdb048838b074889a81c4e580c03dad5a5620",
+  "actual_gms_calls_this_run": 8,
+  "actual_usage_this_run": [
+    {
+      "prompt_tokens": 31034,
+      "total_tokens": 31034
+    },
+    {
+      "prompt_tokens": 30810,
+      "total_tokens": 30810
+    },
+    {
+      "prompt_tokens": 30636,
+      "total_tokens": 30636
+    },
+    {
+      "prompt_tokens": 30579,
+      "total_tokens": 30579
+    },
+    {
+      "prompt_tokens": 30643,
+      "total_tokens": 30643
+    },
+    {
+      "prompt_tokens": 29940,
+      "total_tokens": 29940
+    },
+    {
+      "prompt_tokens": 28059,
+      "total_tokens": 28059
+    },
+    {
+      "prompt_tokens": 15824,
+      "total_tokens": 15824
+    }
+  ],
+  "notice": "Factual public catalog, official NASA text chunks and two public smoke-query vectors. No API key or course archive."
+}

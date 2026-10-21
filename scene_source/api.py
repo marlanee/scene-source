@@ -91,8 +91,8 @@ class Runtime:
 
     def store(self, settings):
         if self.embedding is None:
-            from .embeddings import LocalEmbeddings
-            self.embedding = LocalEmbeddings(settings)
+            from .remote_embeddings import create_embeddings
+            self.embedding = create_embeddings(settings,self.quota.before_model_call if self.quota else None)
         store = VectorStore(settings, self.embedding)
         store.index_movies(self.movies)
         return store
@@ -241,7 +241,8 @@ def create_app(settings=None, embedding=None):
                 raise HTTPException(403, "공개 체험에서는 자료 변경과 평가 실행을 제한합니다. 결과 열람과 영화 질문을 이용해 주세요.")
             req.source_mode = "live"
             try:
-                runtime.quota.request(request.client.host if request.client else "unknown", req.mode == "gms")
+                runtime.quota.request(request.client.host if request.client else "unknown",
+                    req.mode == "gms" or settings.embedding_model.startswith("gms/"))
             except UserFacingError as exc:
                 raise HTTPException(429, str(exc)) from None
         with runtime.lock:
