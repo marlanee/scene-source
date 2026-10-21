@@ -27,13 +27,32 @@ class LocalEmbeddings:
                                    threads=settings.threads, enable_cpu_mem_arena=not settings.public)
         # MiniLM's shipped tokenizer truncates at 128 tokens. Pool 120-token windows
         # so the end of a 1,000-character Korean chunk participates in retrieval.
-        from tokenizers import Tokenizer
-        self.tokenizer = Tokenizer.from_str(self.model.model.tokenizer.to_str())
-        self.tokenizer.no_truncation()
-        self.tokenizer.no_padding()
+        self.shared_tokenizer = settings.public
+        if self.shared_tokenizer:
+            # The multilingual vocabulary is large. Cloning it can exceed a
+            # 512MB worker's memory budget. Public jobs run in one worker, so
+            # temporarily change and restore the existing tokenizer instead.
+            self.tokenizer = self.model.model.tokenizer
+        else:
+            from tokenizers import Tokenizer
+            self.tokenizer = Tokenizer.from_str(self.model.model.tokenizer.to_str())
+            self.tokenizer.no_truncation()
+            self.tokenizer.no_padding()
 
     def windows(self, text: str) -> list[str]:
-        ids = self.tokenizer.encode(text, add_special_tokens=False).ids
+        if self.shared_tokenizer:
+            truncation, padding = self.tokenizer.truncation, self.tokenizer.padding
+            self.tokenizer.no_truncation()
+            self.tokenizer.no_padding()
+            try:
+                ids = self.tokenizer.encode(text, add_special_tokens=False).ids
+            finally:
+                if truncation:
+                    self.tokenizer.enable_truncation(**truncation)
+                if padding:
+                    self.tokenizer.enable_padding(**padding)
+        else:
+            ids = self.tokenizer.encode(text, add_special_tokens=False).ids
         if not ids:
             return [""]
         return [self.tokenizer.decode(ids[i:i + 120], skip_special_tokens=True)

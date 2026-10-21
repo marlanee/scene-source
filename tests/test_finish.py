@@ -116,3 +116,20 @@ def test_gms_keyword_and_selection_are_cached(tmp_path,movie,docs,monkeypatch):
     c.collect(movie,"우주에 대해 설명해줘")
     assert llm.calls.count(Keywords)==1
     assert llm.calls.count(SelectedDocuments)==1
+
+
+def test_public_shared_tokenizer_preserves_long_input_and_restores_model_settings():
+    from tokenizers import Tokenizer,models,pre_tokenizers
+    from scene_source.embeddings import LocalEmbeddings
+    tokenizer=Tokenizer(models.WordLevel({"[UNK]":0,"body":1,"ending":2},unk_token="[UNK]"))
+    tokenizer.pre_tokenizer=pre_tokenizers.Whitespace()
+    tokenizer.enable_truncation(max_length=8)
+    tokenizer.enable_padding(length=8)
+    original=(tokenizer.truncation,tokenizer.padding)
+    embedding=LocalEmbeddings.__new__(LocalEmbeddings)
+    embedding.shared_tokenizer=True;embedding.tokenizer=tokenizer
+    windows=embedding.windows("body "*245+"ending")
+    assert len(windows)==3 and "ending" in windows[-1]
+    assert (tokenizer.truncation,tokenizer.padding)==original
+    encoded=tokenizer.encode_batch(["body","body ending"])
+    assert all(len(e.ids)==8 for e in encoded)
