@@ -2,11 +2,24 @@ from __future__ import annotations
 
 from functools import lru_cache
 import os
+import sys
 from pathlib import Path
 
 import numpy as np
 
 from .config import Settings
+
+
+def release_unused_heap():
+    """Return unused glibc arenas after large model/index allocations."""
+    if sys.platform.startswith("linux"):
+        import ctypes
+        import gc
+        gc.collect()
+        try:
+            ctypes.CDLL("libc.so.6").malloc_trim(0)
+        except (OSError, AttributeError):
+            pass
 
 
 class LocalEmbeddings:
@@ -25,6 +38,8 @@ class LocalEmbeddings:
         cache.mkdir(parents=True, exist_ok=True)
         self.model = TextEmbedding(model_name=self.model_name, cache_dir=str(cache),
                                    threads=settings.threads, enable_cpu_mem_arena=not settings.public)
+        if settings.public:
+            release_unused_heap()
         # MiniLM's shipped tokenizer truncates at 128 tokens. Pool 120-token windows
         # so the end of a 1,000-character Korean chunk participates in retrieval.
         self.shared_tokenizer = settings.public

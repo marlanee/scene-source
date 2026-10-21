@@ -104,15 +104,22 @@ class Runtime:
                 self.jobs[job_id]["status"] = "running"
         started = time.perf_counter()
         try:
+            from .runtime_memory import memory_snapshot
+            if self.settings.public: memory_snapshot("job_start")
             progress("검색 모델과 영화 색인 확인 중")
             settings = replace(self.settings, source_mode=req.source_mode, method=req.method,
                 top_k=req.top_k, fetch_k=req.fetch_k, mmr_lambda=req.mmr_lambda, hybrid=req.hybrid)
             store = self.store(settings)
+            if settings.public:
+                from .embeddings import release_unused_heap
+                release_unused_heap()
+                memory_snapshot("store_ready")
             movie = self.by_id[req.movie_id]
             if req.mode == "gms" and not gms_available():
                 raise UserFacingError("GMS 키가 없습니다. 로컬 검색 모드를 사용해 주세요.")
             from .llm import GMSClient
             llm = GMSClient(before_request=self.quota.before_model_call if self.quota else None) if req.mode == "gms" else None
+            if settings.public: memory_snapshot("gms_client_ready")
 
             def prepare(m, question, use_llm=llm):
                 progress(f"{m['title']} · 위키백과와 PDF 자료 준비 중")
@@ -136,6 +143,9 @@ class Runtime:
                 collection_start = time.perf_counter()
                 collection = prepare(movie, resolve_question(req.question, history))
                 collection_seconds = time.perf_counter() - collection_start
+                if settings.public:
+                    release_unused_heap()
+                    memory_snapshot("collection_ready")
                 progress("같은 영화의 근거를 검색하고 결과 구성 중")
                 if req.action == "compare":
                     result = compare_retrievers(store, req.movie_id, req.question)
@@ -147,6 +157,7 @@ class Runtime:
                     result["timings"]["collection_seconds"] = round(collection_seconds, 3)
                 result["collection"] = collection
             result["total_seconds"] = round(time.perf_counter() - started, 3)
+            if settings.public: memory_snapshot("answer_ready")
             with self.lock:
                 self.jobs[job_id].update(status="completed", message="완료", result=result)
         except UserFacingError as exc:

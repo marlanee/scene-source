@@ -1,7 +1,8 @@
 FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     SCENE_PUBLIC=1 HF_HUB_DISABLE_TELEMETRY=1 ANONYMIZED_TELEMETRY=False \
-    EMBEDDING_CACHE_DIR=/opt/embedding-cache PORT=10000
+    EMBEDDING_CACHE_DIR=/opt/embedding-cache PORT=10000 \
+    MALLOC_ARENA_MAX=2 MALLOC_TRIM_THRESHOLD_=65536
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 libstdc++6 \
     && rm -rf /var/lib/apt/lists/* \

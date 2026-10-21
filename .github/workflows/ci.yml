@@ -62,5 +62,6 @@ jobs:
           else:raise RuntimeError("Answer probe timeout")
           PY
           docker stats --no-stream --format "{{.MemUsage}}" demo
+          docker exec demo python -c "from pathlib import Path;print('\n'.join(x for x in Path('/proc/1/status').read_text().splitlines() if x.startswith(('VmRSS:','VmHWM:'))))"
       - if: always()
         run: docker logs demo || true
