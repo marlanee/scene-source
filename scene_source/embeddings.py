@@ -37,9 +37,19 @@ class LocalEmbeddings:
         cache = Path(os.getenv("EMBEDDING_CACHE_DIR", str(settings.data_dir / "model_cache")))
         cache.mkdir(parents=True, exist_ok=True)
         self.model = TextEmbedding(model_name=self.model_name, cache_dir=str(cache),
-                                   threads=settings.threads, enable_cpu_mem_arena=not settings.public)
+                                   threads=settings.threads, enable_cpu_mem_arena=not settings.public,
+                                   lazy_load=settings.public)
         if settings.public:
+            # Parse the large multilingual vocabulary before allocating ONNX
+            # weights. Reclaim parsing scratch space between the two loads.
+            from .runtime_memory import memory_snapshot
+            memory_snapshot("tokenizer_load_start")
+            self.model.model._ensure_tokenizer()
             release_unused_heap()
+            memory_snapshot("tokenizer_ready")
+            self.model.model.load_onnx_model()
+            release_unused_heap()
+            memory_snapshot("embedding_ready")
         # MiniLM's shipped tokenizer truncates at 128 tokens. Pool 120-token windows
         # so the end of a 1,000-character Korean chunk participates in retrieval.
         self.shared_tokenizer = settings.public
