@@ -15,7 +15,7 @@ jobs:
       - run: pip install -r requirements-service.txt pytest
       - run: python -m compileall -q scene_source
       - run: node --check web/app.js
-      - run: pytest tests/test_core.py tests/test_gms_contract.py tests/test_advanced.py tests/test_finish.py -q
+      - run: python -m pytest tests/test_core.py tests/test_gms_contract.py tests/test_advanced.py tests/test_finish.py -q
   image:
     runs-on: ubuntu-latest
     steps:

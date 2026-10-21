@@ -264,6 +264,7 @@ async function init() {
   try {
     [state.status,state.movies]=await Promise.all([api("/api/status"),api("/api/movies")]);
     $("movie-count").textContent=state.status.movie_count;
+    $("workspace-label").textContent=state.status.public_demo?"PUBLIC DEMO":"LOCAL WORKSPACE";
     $("key-status").textContent=state.status.gms_available?"GMS 연결됨":"로컬 검색 모드 · GMS 연결 대기";
     $("response-mode").value=state.status.default_mode || "local";
     $("source-mode").value=state.status.source_mode || "bundle";
