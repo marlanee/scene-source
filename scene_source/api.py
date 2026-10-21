@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import os
 import re
 import threading
 import time
@@ -41,7 +42,7 @@ class Message(BaseModel):
 
 
 class WorkRequest(BaseModel):
-    action: Literal["chat", "compare", "discover", "evaluate", "official"]
+    action: Literal["chat", "compare", "discover", "evaluate", "official", "research"]
     movie_id: str = Field(default="157336", max_length=30)
     question: str = Field(default="", max_length=1000)
     source_mode: Literal["bundle", "live"] = "bundle"
@@ -60,8 +61,10 @@ class WorkRequest(BaseModel):
     def valid_options(self):
         if self.fetch_k < self.top_k:
             raise ValueError("후보 수는 Top-k 이상이어야 합니다.")
-        if self.action in {"chat", "compare", "discover"} and not self.question.strip():
+        if self.action in {"chat", "compare", "discover", "research"} and not self.question.strip():
             raise ValueError("질문 또는 탐색 조건을 입력해 주세요.")
+        if self.action == "research" and self.mode != "gms":
+            raise ValueError("추가 확인에는 AI 연결이 필요합니다.")
         if self.action == "evaluate" and not self.case_ids:
             raise ValueError("평가 질문을 선택해 주세요.")
         return self
@@ -106,6 +109,20 @@ class Runtime:
         try:
             from .runtime_memory import memory_snapshot
             if self.settings.public: memory_snapshot("job_start")
+            if req.action == "research":
+                # Independent from Chroma, collection and the original answer graph.
+                from .llm import GMSClient
+                from .web_research import research_web
+                if not gms_available():
+                    raise UserFacingError("추가 확인은 AI 연결 후 사용할 수 있습니다.")
+                llm = GMSClient(before_request=self.quota.before_model_call if self.quota else None)
+                question = resolve_question(req.question, [{"role":m.role,"content":m.content[:1000]} for m in req.history])
+                result = research_web(self.settings, self.by_id[req.movie_id], question, llm, progress)
+                result["total_seconds"] = round(time.perf_counter() - started, 3)
+                if self.settings.public: memory_snapshot("web_research_ready")
+                with self.lock:
+                    self.jobs[job_id].update(status="completed", message="추가 자료 확인 완료", result=result)
+                return
             progress("검색 모델과 영화 색인 확인 중")
             settings = replace(self.settings, source_mode=req.source_mode, method=req.method,
                 top_k=req.top_k, fetch_k=req.fetch_k, mmr_lambda=req.mmr_lambda, hybrid=req.hybrid)
@@ -116,7 +133,7 @@ class Runtime:
                 memory_snapshot("store_ready")
             movie = self.by_id[req.movie_id]
             if req.mode == "gms" and not gms_available():
-                raise UserFacingError("GMS 키가 없습니다. 로컬 검색 모드를 사용해 주세요.")
+                raise UserFacingError("AI 키가 없습니다. 로컬 검색 모드를 사용해 주세요.")
             from .llm import GMSClient
             llm = GMSClient(before_request=self.quota.before_model_call if self.quota else None) if req.mode == "gms" else None
             if settings.public: memory_snapshot("gms_client_ready")
@@ -173,7 +190,7 @@ def create_app(settings=None, embedding=None):
     settings = settings or load_settings()
     settings = replace(settings, public=public_mode())
     runtime = Runtime(settings, embedding)
-    api = FastAPI(title="Scene & Source", version="2.0.0")
+    api = FastAPI(title="Scene & Source", version="2.1.0")
     api.state.runtime = runtime
 
     @api.middleware("http")
@@ -217,10 +234,13 @@ def create_app(settings=None, embedding=None):
     @api.get("/api/status")
     def status():
         return {"gms_available": gms_available(), "movie_count": len(runtime.movies),
-                "embedding": settings.embedding_model, "version": "2.0.0",
+                "embedding": settings.embedding_model, "version": "2.1.0",
                 "pdf_count": len(records(settings.root)), "local_only": not public_mode(),
                 "public_demo": public_mode(), "source_mode": "live" if public_mode() else settings.source_mode,
-                "admin_features": not public_mode(), "default_mode": "gms" if gms_available() else "local"}
+                "admin_features": not public_mode(), "default_mode": "gms" if gms_available() else "local",
+                "hourly_request_limit": max(1, int(os.getenv("GMS_HOURLY_REQUEST_LIMIT", "100"))),
+                "daily_model_call_limit": max(1, int(os.getenv("GMS_DAILY_CALL_LIMIT", "100"))),
+                "web_research": True}
 
     @api.get("/healthz", include_in_schema=False)
     def health():
@@ -235,7 +255,9 @@ def create_app(settings=None, embedding=None):
         if req.movie_id not in runtime.by_id:
             raise HTTPException(404, "영화를 찾지 못했습니다.")
         if req.action == "evaluate" and not gms_available():
-            raise UserFacingError("GMS 키 연결 후 실제 RAG 전후 비교를 실행할 수 있습니다.")
+            raise UserFacingError("AI 키 연결 후 실제 RAG 전후 비교를 실행할 수 있습니다.")
+        if req.action == "research" and not gms_available():
+            raise UserFacingError("추가 확인은 AI 연결 후 사용할 수 있습니다.")
         if public_mode():
             if req.action in {"evaluate", "official"}:
                 raise HTTPException(403, "공개 체험에서는 자료 변경과 평가 실행을 제한합니다. 결과 열람과 영화 질문을 이용해 주세요.")

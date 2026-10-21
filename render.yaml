@@ -18,4 +18,4 @@ services:
       - key: GMS_DAILY_CALL_LIMIT
         value: "100"
       - key: GMS_HOURLY_REQUEST_LIMIT
-        value: "3"
+        value: "100"

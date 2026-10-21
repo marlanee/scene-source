@@ -7,6 +7,7 @@
 - HTML/CSS/JS + FastAPI, retrieve/generate LangGraph
 - 다국어 의미 검색 + 선택적 BM25 보완, MMR 비교
 - 작품 소개와 현실 배경의 근거 범위 구분, 인용 원문과 PDF 쪽 링크
+- 답변 하단 추가 확인: AI 검색어·일반 웹 검색·AI 선별, 원래 답변과 분리된 뉴스/블로그 읽을거리
 - 실제 RAG 전후 비교 기록, 로컬 버전의 사람 채점·내보내기
 - 공개 체험의 방문자별 작업 격리·GMS 호출 상한·관리 기능 제한
 
@@ -22,7 +23,7 @@ Render에서 이 저장소를 Docker Web Service로 연결합니다. /healthz로
 
 공개 서버의 임베딩 요청과 답변 생성은 같은 하루 논리 호출 상한에 포함됩니다. 원문 발췌 모드도 의미 검색에는 GMS를 사용하므로 API 한도의 영향을 받습니다. API 키는 Render의 서버 비밀 변수에만 저장합니다.
 
-무료 서버의 임시 파일은 재시작 시 사라질 수 있습니다. 영구 저장이 필요하면 /app/data에 영구 볼륨을 연결하세요. 공개 서버는 PDF 업로드/삭제와 평가 실행을 차단하고 결과 열람만 제공합니다. GMS 호출 상한 기본 100회/UTC 일, 접속 환경별 검색·답변 요청은 시간당 3회입니다. 상한은 논리 호출 기준이며 재시도에 따른 실제 공급자 요청 수는 더 많을 수 있습니다.
+무료 서버의 임시 파일은 재시작 시 사라질 수 있습니다. 영구 저장이 필요하면 /app/data에 영구 볼륨을 연결하세요. 공개 서버는 PDF 업로드/삭제와 평가 실행을 차단하고 결과 열람만 제공합니다. GMS 호출 상한 기본 100회/UTC 일, 접속 환경별 검색·답변 요청은 시간당 100회입니다. 상한은 논리 호출 기준이며 재시도에 따른 실제 공급자 요청 수는 더 많을 수 있습니다.
 
 ## 데이터·출처
 
@@ -32,4 +33,4 @@ Render에서 이 저장소를 Docker Web Service로 연결합니다. /healthz로
 
 ## 검증
 
-python -m pytest tests/test_core.py tests/test_gms_contract.py tests/test_advanced.py tests/test_finish.py tests/test_remote_embeddings.py는 API 키 없이 계약을 검사합니다. verify_complete.py --run-api와 verify_gms.py --run-api --compare는 실제 GMS 사용량이 발생합니다. 사람의 셀프/상호 점검 기록은 가상으로 채우지 않습니다.
+python -m pytest tests/test_core.py tests/test_gms_contract.py tests/test_advanced.py tests/test_finish.py tests/test_remote_embeddings.py tests/test_web_research.py는 API 키 없이 계약을 검사합니다. verify_complete.py --run-api와 verify_gms.py --run-api --compare는 실제 GMS 사용량이 발생합니다. 사람의 셀프/상호 점검 기록은 가상으로 채우지 않습니다.

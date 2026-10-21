@@ -48,7 +48,7 @@ class GMSClient:
     def __init__(self, before_request=None):
         key = os.getenv("GMS_KEY", "").strip()
         if not key:
-            raise UserFacingError("GMS 키가 없습니다. .env에 GMS_KEY를 설정한 뒤 앱을 다시 시작해 주세요.")
+            raise UserFacingError("AI 키가 없습니다. .env에 API 키를 설정한 뒤 앱을 다시 시작해 주세요.")
         self.client = ChatOpenAI(model=os.getenv("GMS_MODEL", "gpt-5.4-nano"), api_key=key,
             base_url=os.getenv("GMS_BASE_URL", "https://gms.ssafy.io/gmsapi/api.openai.com/v1/"),
             timeout=60, max_retries=2, use_responses_api=False)
@@ -71,12 +71,12 @@ class GMSClient:
             # Do not expose SDK exceptions, prompts, headers or response bodies.
             status = getattr(exc, "status_code", None)
             if status == 401:
-                raise UserFacingError("GMS 인증에 실패했습니다. 설정된 키를 확인해 주세요.") from None
+                raise UserFacingError("AI 인증에 실패했습니다. 설정된 키를 확인해 주세요.") from None
             if status in {403, 404}:
-                raise UserFacingError("설정된 GMS 모델 또는 API에 접근할 수 없습니다. 모델명과 권한을 확인해 주세요.") from None
+                raise UserFacingError("설정된 AI 모델 또는 API에 접근할 수 없습니다. 모델명과 권한을 확인해 주세요.") from None
             if status == 429:
-                raise UserFacingError("GMS 사용 한도 또는 요청 속도 제한에 도달했습니다. 잠시 후 다시 시도하거나 사용 한도를 확인해 주세요.") from None
-            raise UserFacingError("GMS 응답을 받지 못했습니다. 키·모델 접근 권한·네트워크·사용 한도를 확인해 주세요.") from None
+                raise UserFacingError("AI 사용 한도 또는 요청 속도 제한에 도달했습니다. 잠시 후 다시 시도하거나 사용 한도를 확인해 주세요.") from None
+            raise UserFacingError("AI 응답을 받지 못했습니다. 키·모델 접근 권한·네트워크·사용 한도를 확인해 주세요.") from None
 
     def structured(self, system: str, payload: str, schema: type[BaseModel]):
         system += "\n다음 JSON Schema에 맞는 객체 하나만 출력한다. 필드 타입과 null 허용 여부를 지킨다:\n" + json.dumps(schema.model_json_schema(), ensure_ascii=False)

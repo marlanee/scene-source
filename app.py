@@ -100,11 +100,11 @@ def main():
         movie_id = st.selectbox("질문할 영화", sorted(catalog, key=lambda i: catalog[i]["title"]),
             format_func=lambda i: f"{catalog[i]['title']} ({catalog[i]['year']})", key="selected_movie_id")
         if has_key:
-            mode = st.radio("응답 방식", ["GMS 근거 답변", "로컬 원문 검색"], key="response_mode")
+            mode = st.radio("응답 방식", ["GMS 근거 답변", "로컬 원문 검색"], format_func=lambda x: x.replace("GMS", "AI"), key="response_mode")
         else:
             mode = "로컬 원문 검색"
-            st.info("GMS 키 대기 중 · 로컬 원문 검색 가능")
-            st.caption("키를 받으면 .env의 GMS_KEY를 채우고 앱을 다시 시작하세요.")
+            st.info("AI 연결 대기 중 · 로컬 원문 검색 가능")
+            st.caption("서버의 API 키를 설정한 뒤 앱을 다시 시작하세요.")
         source_mode = st.selectbox("외부 문서 출처", ["bundle", "live"],
             format_func=lambda x: "로컬 문서 · 배포 자료와 보완 문서" if x == "bundle" else "실시간 위키백과")
         with st.expander("검색 설정"):
@@ -143,7 +143,7 @@ def main():
         st.divider()
         task = st.radio("질문 유형", ["배경 해설", "사실 확인"], horizontal=True)
         if not has_key:
-            st.caption("지금은 원문 검색을 검증하는 모드입니다. 설명 생성과 사실 판정은 GMS 연결 후 활성화됩니다.")
+            st.caption("지금은 원문 검색을 검증하는 모드입니다. 설명 생성과 사실 판정은 AI 연결 후 활성화됩니다.")
         messages = st.session_state.setdefault("threads", {}).setdefault(f"{movie_id}:{mode}", [])
         if not messages:
             st.info("예: 이 영화의 배경이 된 사건은 무엇인가요? / 이 설정을 현실에서도 확인할 수 있나요?")
@@ -177,7 +177,7 @@ def main():
         result = st.session_state.get("discovery_result")
         if result:
             if not result["verified"]:
-                st.info("로컬 탐색 후보입니다. 명시적 연도·장르·시간 조건을 적용했으며, 주제·분위기 일치 여부는 GMS 연결 후 추가 검증합니다.")
+                st.info("로컬 탐색 후보입니다. 명시적 연도·장르·시간 조건을 적용했으며, 주제·분위기 일치 여부는 AI 연결 후 추가 검증합니다.")
             if not result["items"]:
                 st.info("확인 가능한 조건에 맞는 영화가 없습니다. 조건을 줄여 보세요.")
             for start in range(0, len(result["items"]), 3):
@@ -196,7 +196,7 @@ def main():
         a, b, c = st.columns(3)
         a.metric("영화 메타데이터", f"{store.meta.count():,}편")
         b.metric("외부 문서 청크", f"{store.docs.count():,}개")
-        c.metric("GMS 연결", "키 설정됨 · 실호출 시 검증" if has_key else "키 발급 대기")
+        c.metric("AI 연결", "키 설정됨 · 실호출 시 검증" if has_key else "키 발급 대기")
         st.write("로컬 다국어 임베딩 → ChromaDB 두 컬렉션 → LangGraph 검색·생성 노드")
         st.caption("배포 위키 문서는 2026년 9월 자료이며 보완 문서의 수집일은 각 근거에 표시됩니다. 최신 사실을 보장하지 않으며 문서의 주장과 현실의 정확성은 별도로 검토해야 합니다.")
         detail = st.session_state.get("last_diagnostics")
@@ -211,7 +211,7 @@ def main():
                 st.json(detail["timings"])
         else:
             st.info("질문을 한 번 실행하면 수집·검색 결과를 확인할 수 있습니다.")
-        st.markdown("**남은 실검증:** GMS 검색어 추출 · 후보 선별 · 답변 생성 · 사실 확인 · 탐색 조건 검증 · RAG 전후 비교")
+        st.markdown("**원문 대조 점검:** AI 검색어 추출 · 후보 선별 · 답변 생성 · 사실 확인 · 탐색 조건 검증 · RAG 전후 비교")
     st.divider()
     st.caption("자료: TMDB 기반 배포 영화 메타데이터 / 한국어 위키백과 배포 문서(CC BY-SA 4.0). 각 답변에서 실제 사용한 원문을 확인할 수 있습니다.")
 

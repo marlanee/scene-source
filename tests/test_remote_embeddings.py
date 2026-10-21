@@ -43,7 +43,7 @@ def test_remote_seed_works_without_key_and_unknown_input_is_gated(tmp_path,monke
     (folder/"embedding_manifest.json").write_text(json.dumps({"model":PUBLIC_MODEL,"sha256":hashlib.sha256(seed.read_bytes()).hexdigest()}),encoding="utf-8")
     session=Session();embedding=GMSRemoteEmbeddings(Settings(root=tmp_path),session=session)
     assert embedding.query("prepared")[0]==1 and not session.calls
-    with pytest.raises(UserFacingError,match="GMS 임베딩 연결"):embedding.query("new question")
+    with pytest.raises(UserFacingError,match="AI 임베딩 연결"):embedding.query("new question")
 
 
 def test_remote_rejects_invalid_dimensions_without_exposing_response(tmp_path,monkeypatch):

@@ -57,12 +57,12 @@ class GMSRemoteEmbeddings:
     def _valid_vector(vector):
         array=np.asarray(vector,dtype=float)
         if array.shape!=(DIMENSIONS,) or not np.isfinite(array).all() or np.linalg.norm(array)<1e-12:
-            raise UserFacingError("GMS 임베딩 벡터의 형식이 올바르지 않습니다.")
+            raise UserFacingError("AI 임베딩 벡터의 형식이 올바르지 않습니다.")
         return (array/np.linalg.norm(array)).tolist()
 
     def _request(self,texts):
         key=os.getenv("GMS_KEY","").strip()
-        if not key:raise UserFacingError("새로운 검색에는 GMS 임베딩 연결이 필요합니다. 서버의 키 설정을 확인해 주세요.")
+        if not key:raise UserFacingError("새로운 검색에는 AI 임베딩 연결이 필요합니다. 서버의 키 설정을 확인해 주세요.")
         if self.before_request:self.before_request()
         base=os.getenv("GMS_BASE_URL","https://gms.ssafy.io/gmsapi/api.openai.com/v1/").rstrip("/")
         for attempt in range(3):
@@ -71,21 +71,21 @@ class GMSRemoteEmbeddings:
                     json={"model":MODEL,"dimensions":DIMENSIONS,"input":texts},timeout=60)
             except requests.RequestException:
                 if attempt<2:time.sleep(2**attempt);continue
-                raise UserFacingError("GMS 임베딩에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.") from None
+                raise UserFacingError("AI 임베딩에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.") from None
             if response.status_code in {429,500,502,503,504} and attempt<2:
                 time.sleep(2**attempt);continue
             if response.status_code in {401,403,404}:
-                raise UserFacingError("GMS 임베딩 모델의 키 또는 접근 권한을 확인해 주세요.")
+                raise UserFacingError("AI 임베딩 모델의 키 또는 접근 권한을 확인해 주세요.")
             if response.status_code==429:
-                raise UserFacingError("GMS 임베딩 사용 한도에 도달했습니다. 잠시 후 다시 시도해 주세요.")
+                raise UserFacingError("AI 임베딩 사용 한도에 도달했습니다. 잠시 후 다시 시도해 주세요.")
             if response.status_code!=200:
-                raise UserFacingError("GMS 임베딩 응답을 받지 못했습니다. 다시 시도해 주세요.")
+                raise UserFacingError("AI 임베딩 응답을 받지 못했습니다. 다시 시도해 주세요.")
             try:
                 payload=response.json();rows=payload["data"]
                 if len(rows)!=len(texts) or {r["index"] for r in rows}!=set(range(len(texts))):raise ValueError()
                 vectors=[self._valid_vector(r["embedding"]) for r in sorted(rows,key=lambda r:r["index"])]
             except (ValueError,KeyError,TypeError):
-                raise UserFacingError("GMS 임베딩 응답 형식을 확인하지 못했습니다.") from None
+                raise UserFacingError("AI 임베딩 응답 형식을 확인하지 못했습니다.") from None
             self.calls+=1;self.usage.append(payload.get("usage"))
             return vectors
 

@@ -73,8 +73,9 @@ class PublicQuota:
         # Hash IP addresses before persistence. A new cookie does not reset the IP quota.
         identity = hashlib.sha256(client_ip.encode()).hexdigest()
         bucket = int(time.time()) // 600
-        self.take(f"request:{identity}:{bucket}", 5, "짧은 시간에 요청이 많습니다. 잠시 후 다시 이용해 주세요.")
+        self.take(f"request:{identity}:{bucket}", 20, "짧은 시간에 요청이 많습니다. 잠시 후 다시 이용해 주세요.")
         if use_gms:
             hour = int(time.time()) // 3600
-            self.take(f"visitor-gms:{identity}:{hour}", int(os.getenv("GMS_HOURLY_REQUEST_LIMIT", "3")),
-                      "공개 검색·답변은 접속 환경별 시간당 3회까지 가능합니다. 영화 목록·비교 기록·PDF 자료는 계속 열람할 수 있습니다.")
+            limit = max(1, int(os.getenv("GMS_HOURLY_REQUEST_LIMIT", "100")))
+            self.take(f"visitor-gms:{identity}:{hour}", limit,
+                      f"공개 검색·답변·추가 확인은 접속 환경별 시간당 {limit}회까지 가능합니다. 영화 목록·비교 기록·PDF 자료는 계속 열람할 수 있습니다.")

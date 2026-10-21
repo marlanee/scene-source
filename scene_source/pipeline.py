@@ -73,8 +73,8 @@ def build_graph(store, llm=None):
             mode = "gms"
         else:
             # These are verbatim source excerpts, not a generated answer or a fact verdict.
-            parts = ["**로컬 검색 결과 · GMS 답변 생성 전**",
-                     "아래는 검색된 문서의 원문 발췌입니다. 질문에 대한 사실 판정이나 완성된 답변은 GMS 연결 후 제공합니다."]
+            parts = ["**로컬 검색 결과 · AI 답변 생성 전**",
+                     "아래는 검색된 문서의 원문 발췌입니다. 질문에 대한 사실 판정이나 완성된 답변은 AI 연결 후 제공합니다."]
             for i, e in enumerate(evidence, 1):
                 if i > 4:
                     break

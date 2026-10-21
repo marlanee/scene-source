@@ -75,14 +75,25 @@ function renderSources(sources) {
   state.currentSources = sources;
   $("source-list").innerHTML = sources.length ? sources.map((e,i)=>sourceHTML(e,e.number||i+1)).join("") : '<div class="empty"><span>▱</span><h3>근거는 여기에 모입니다</h3><p>질문하면 영화 정보와 외부 자료를<br>함께 확인할 수 있어요.</p></div>';
 }
+function researchHTML(message, index) {
+  const result=message.research;
+  const expanded=!!message.research_open;
+  const disabled=!state.status.gms_available && !result;
+  return '<div class="answer-research"><button class="quiet research-toggle" data-research="'+index+'" aria-expanded="'+expanded+'" aria-controls="research-'+index+'"'+(disabled?' disabled':'')+'>'+(expanded?'추가 자료 닫기 ↑':'추가 확인 · 인터넷 자료 ↗')+'</button>'+
+    '<small>뉴스·블로그를 포함한 인터넷 자료를 별도로 찾아봅니다.</small>'+
+    '<section id="research-'+index+'" class="research-results" aria-label="인터넷 추가 확인 자료"'+(expanded?'':' hidden')+'>'+
+    (result?'<h3>인터넷에서 더 읽어볼 자료</h3><p class="research-notice">'+esc(result.notice)+'</p><p class="muted">검색어: '+esc((result.queries||[]).join(' / '))+'<br>검색 시각: '+esc(new Date(result.searched_at).toLocaleString())+(result.cache_hit?' · 최근 검색 결과 재사용':'')+'</p>'+
+      (result.partial?'<p class="research-notice">일부 검색 출처에 연결하지 못해 확보한 자료만 표시합니다.</p>':'')+
+      (result.items.length?result.items.map(item=>'<article class="web-result"><div class="source-tag">웹 검색 자료 · '+esc(item.domain)+'</div><a class="source-title" href="'+esc(safeUrl(item.url))+'" target="_blank" rel="noopener noreferrer">'+esc(item.title)+' ↗</a><p>'+esc(item.snippet)+'</p><span class="muted">검색엔진 요약 · 본문 전체 미확인</span><p class="reading-reason">AI가 고른 이유: '+esc(item.reason)+'</p></article>').join(''):'<p>질문과 관련된 추가 자료를 찾지 못했습니다. 기존 답변과 인용 근거를 확인해 주세요.</p>'):'')+'</section></div>';
+}
 function renderChat() {
   const history = state.history[key()] || [];
   if (!history.length) {
     const prompts = state.movie.title === "인터스텔라" ? ["블랙홀의 사건의 지평선은 무엇인가요?","웜홀은 실제로 관측되었나요?"] : [state.movie.title+"의 배경을 설명해 주세요.", "영화에 등장하는 실존 인물이나 사건은 무엇인가요?"];
-    $("chat-log").innerHTML = '<div class="welcome"><h3>스크린 밖의 이야기가 궁금한가요?</h3><p>장면 속 과학, 역사, 실존 인물에 대해 물어보세요.<br>'+($("response-mode").value==="gms"?"검색한 근거를 바탕으로 GMS가 답변을 생성합니다.":"현재 로컬 모드에서는 검색한 원문을 그대로 보여드립니다.")+'</p><div class="suggestions">'+prompts.map(q=>'<button class="suggestion" data-question="'+esc(q)+'">'+esc(q)+' ↗</button>').join("")+'</div></div>';
+    $("chat-log").innerHTML = '<div class="welcome"><h3>스크린 밖의 이야기가 궁금한가요?</h3><p>장면 속 과학, 역사, 실존 인물에 대해 물어보세요.<br>'+($("response-mode").value==="gms"?"검색한 근거를 바탕으로 AI가 답변을 생성합니다.":"현재 로컬 모드에서는 검색한 원문을 그대로 보여드립니다.")+'</p><div class="suggestions">'+prompts.map(q=>'<button class="suggestion" data-question="'+esc(q)+'">'+esc(q)+' ↗</button>').join("")+'</div></div>';
     renderSources([]);
   } else {
-    $("chat-log").innerHTML = history.map(m=> m.role === "user" ? '<div class="message user">'+esc(m.content)+'</div>' : '<article class="message"><div class="message-label">SCENE & SOURCE / '+(m.generation_mode==="gms"?"GMS ANSWER":"SOURCE EXCERPTS")+'</div><div class="answer">'+formatAnswer(m.content)+'</div><small>'+esc(m.total_seconds)+"초 · "+(m.generation_mode==="gms"?"GMS 실제 답변":"원문 발췌 · AI 판정 전")+'</small></article>').join("");
+    $("chat-log").innerHTML = history.map((m,index)=> m.role === "user" ? '<div class="message user">'+esc(m.content)+'</div>' : '<article class="message"><div class="message-label">SCENE & SOURCE / '+(m.generation_mode==="gms"?"AI ANSWER":"SOURCE EXCERPTS")+'</div><div class="answer">'+formatAnswer(m.content)+'</div><small>'+esc(m.total_seconds)+"초 · "+(m.generation_mode==="gms"?"AI 실제 답변":"원문 발췌 · AI 판정 전")+'</small>'+researchHTML(m,index)+'</article>').join("");
     const last = [...history].reverse().find(m=>m.role==="assistant");
     renderSources(last?.sources || []);
     if (last && !last.sources?.length) $("source-list").innerHTML = '<div class="notice">이번 답변에는 인용된 근거가 없습니다. 답변의 확인 불가 안내를 살펴보고, 자료가 부족하면 추가 원문을 연결해 주세요.</div>';
@@ -123,9 +134,22 @@ async function ask(question) {
   const savedKey = key();
   const previous = state.history[savedKey] || [];
   const result = await work({...options("chat",question), history:previous.slice(-10).map(m=>({role:m.role,content:m.content.slice(0,8000)}))});
-  state.history[savedKey] = [...previous,{role:"user",content:question},{role:"assistant",content:result.answer,generation_mode:result.generation_mode,sources:result.used_sources,total_seconds:result.total_seconds}].slice(-30);
+  state.history[savedKey] = [...previous,{role:"user",content:question},{role:"assistant",content:result.answer,question,generation_mode:result.generation_mode,sources:result.used_sources,total_seconds:result.total_seconds}].slice(-30);
   persist(); renderChat(); $("question").value="";
   $("chat-log").scrollTop = $("chat-log").scrollHeight;
+}
+async function additionalResearch(index) {
+  if (state.busy) return;
+  const savedKey=key(), history=state.history[savedKey]||[], message=history[index];
+  if (!message || message.role!=="assistant") return;
+  if (message.research) { message.research_open=!message.research_open; persist(); renderChat(); return; }
+  const question=message.question || [...history.slice(0,index)].reverse().find(m=>m.role==="user")?.content;
+  if (!question) throw new Error("이 답변의 원래 질문을 찾지 못했습니다. 다시 질문한 뒤 추가 확인을 이용해 주세요.");
+  const result=await work({...options("research",question.slice(0,1000)),mode:"gms",
+    history:history.slice(0,Math.max(0,index-1)).slice(-10).map(m=>({role:m.role,content:m.content.slice(0,8000)}))});
+  message.research=result; message.research_open=true;
+  persist(); renderChat();
+  $("research-"+index)?.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 function download(name, content, type="application/json") {
   const url = URL.createObjectURL(new Blob([content],{type}));
@@ -170,7 +194,7 @@ function renderRuns(runs) {
 async function loadEvaluation() {
   const data = await api("/api/evaluation");
   state.status.gms_available = data.gms_available;
-  $("evaluation-gate").innerHTML = '<div class="notice">'+(state.status.public_demo?"공개 체험에서는 실제 비교 기록을 열람할 수 있습니다.":data.gms_available?"GMS 연결됨 · 선택한 질문을 실제 모델로 실행합니다.":"GMS 연결 대기 · 질문·평가 기준은 준비되어 있습니다. 키 연결 후 실제 비교를 실행할 수 있습니다.")+'</div>';
+  $("evaluation-gate").innerHTML = '<div class="notice">'+(state.status.public_demo?"공개 체험에서는 실제 비교 기록을 열람할 수 있습니다.":data.gms_available?"AI 연결됨 · 선택한 질문을 실제 모델로 실행합니다.":"AI 연결 대기 · 질문·평가 기준은 준비되어 있습니다. 키 연결 후 실제 비교를 실행할 수 있습니다.")+'</div>';
   $("evaluation-cases").innerHTML = data.cases.map(c=>'<label class="check-row"><input type="checkbox" name="case" value="'+c.id+'" checked><span><b>'+c.id+'</b>'+esc(c.title)+'<small>'+esc(c.question)+'</small></span></label>').join("");
   renderRuns(data.runs); updateGate();
 }
@@ -178,6 +202,7 @@ document.addEventListener("click", async (event)=>{
   const el = event.target.closest("button");
   if (!el) return;
   try {
+    if (el.hasAttribute("data-research")) await additionalResearch(Number(el.dataset.research));
     if (el.dataset.view) view(el.dataset.view);
     if (el.hasAttribute("data-switch-chat")) { view("chat"); $("movie-search").focus(); }
     if (el.dataset.task) {
@@ -269,7 +294,7 @@ async function init() {
     [state.status,state.movies]=await Promise.all([api("/api/status"),api("/api/movies")]);
     $("movie-count").textContent=state.status.movie_count;
     $("workspace-label").textContent=state.status.public_demo?"PUBLIC DEMO":"LOCAL WORKSPACE";
-    $("key-status").textContent=state.status.gms_available?"GMS 연결됨":"로컬 검색 모드 · GMS 연결 대기";
+    $("key-status").textContent=state.status.gms_available?"AI 연결됨":"로컬 검색 모드 · AI 연결 대기";
     $("response-mode").value=state.status.default_mode || "local";
     $("source-mode").value=state.status.source_mode || "bundle";
     const help=$("help");
@@ -277,10 +302,10 @@ async function init() {
       $("response-mode").querySelector('[value="local"]').textContent="원문 발췌 · 검색 API 사용";
       help.querySelector("h2").textContent="공개 체험 안내";
       const paragraphs=help.querySelectorAll("p");
-      paragraphs[0].textContent="검색·답변은 접속 환경별 시간당 3회까지 체험할 수 있습니다. 의미 검색과 답변 생성은 함께 하루 사용량 한도를 적용합니다. 한도 이후에는 영화 목록·비교 기록·PDF 자료를 열람할 수 있습니다.";
-      paragraphs[1].textContent="공개 서버의 의미 검색을 위해 검색어·선별 문서를 GMS 임베딩 API로 전송하며, 답변 생성에는 질문·최근 대화·근거를 전송합니다. 개인 정보나 비밀은 질문에 넣지 마세요. 자료 변경과 사람 채점은 로컬 버전에서 제공합니다.";
+      paragraphs[0].textContent="검색·답변·추가 확인은 접속 환경별 시간당 "+state.status.hourly_request_limit+"회까지 요청할 수 있습니다. 서버 전체 AI 호출은 하루 "+state.status.daily_model_call_limit+"회까지이며, 한 요청에 여러 호출이 필요할 수 있습니다. 추가 자료는 최근 검색 결과를 재사용할 수 있습니다.";
+      paragraphs[1].textContent="의미 검색에는 검색어·문서, 답변 생성에는 질문·최근 대화·근거를 AI 제공 서비스로 전송합니다. 추가 확인은 AI가 만든 검색어를 외부 검색 서비스에, 검색 요약을 AI 제공 서비스에 전송합니다. 개인 정보나 비밀은 질문에 넣지 마세요. 자료 변경과 사람 채점은 로컬 버전에서 제공합니다.";
     } else if (state.status.gms_available) {
-      help.querySelector("p").textContent="GMS가 연결되어 있습니다. 검색한 근거를 바탕으로 AI 답변과 사실 확인을 사용할 수 있습니다.";
+      help.querySelector("p").textContent="AI가 연결되어 있습니다. 검색한 근거를 바탕으로 AI 답변과 사실 확인을 사용할 수 있습니다.";
     }
     movieOptions(); setMovie("157336"); updateGate();
   } catch(error){ failure(error); }
