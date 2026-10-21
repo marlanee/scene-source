@@ -272,6 +272,15 @@ async function init() {
     $("key-status").textContent=state.status.gms_available?"GMS 연결됨":"로컬 검색 모드 · GMS 연결 대기";
     $("response-mode").value=state.status.default_mode || "local";
     $("source-mode").value=state.status.source_mode || "bundle";
+    const help=$("help");
+    if (state.status.public_demo) {
+      help.querySelector("h2").textContent="공개 체험 안내";
+      const paragraphs=help.querySelectorAll("p");
+      paragraphs[0].textContent="AI 답변을 바로 체험할 수 있습니다. 접속 환경별 시간당 3회, 전체 서비스 하루 사용량 한도가 적용됩니다. 한도에 도달하면 원문 검색을 이용해 주세요.";
+      paragraphs[1].textContent="질문·대화 기록·검색한 근거는 답변 생성을 위해 GMS로 전송됩니다. 개인 정보나 비밀은 질문에 넣지 마세요. PDF 추가와 평가 실행은 운영자의 로컬 버전에서 제공합니다.";
+    } else if (state.status.gms_available) {
+      help.querySelector("p").textContent="GMS가 연결되어 있습니다. 검색한 근거를 바탕으로 AI 답변과 사실 확인을 사용할 수 있습니다.";
+    }
     movieOptions(); setMovie("157336"); updateGate();
   } catch(error){ failure(error); }
 }
