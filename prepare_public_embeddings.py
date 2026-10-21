@@ -37,20 +37,23 @@ def main():
         vectors.extend(embedding.documents(texts[start:start+128]))
         print("Prepared embedding inputs",min(start+128,len(texts)),"/",len(texts),flush=True)
     seed=root/"public_data/embeddings.jsonl"
-    with seed.open("w",encoding="utf-8") as stream:
+    manifest=root/"public_data/embedding_manifest.json"
+    previous=json.loads(manifest.read_text(encoding="utf-8")) if manifest.exists() else {}
+    with seed.open("w",encoding="utf-8",newline="\n") as stream:
         for text,vector in zip(texts,vectors):
             stream.write(json.dumps({"key":embedding_key(text),"vector":vector},separators=(",",":"))+"\n")
     report={"model":PUBLIC_MODEL,"dimensions":384,"inputs":len(texts),"catalog_inputs":len(movies),
         "official_pdf_inputs":pdf_inputs,"smoke_query_inputs":len(SMOKE_QUERIES),
         "sha256":hashlib.sha256(seed.read_bytes()).hexdigest(),
         "actual_gms_calls_this_run":embedding.calls,"actual_usage_this_run":embedding.usage,
+        "prepared_api_calls_total":previous.get("prepared_api_calls_total",previous.get("actual_gms_calls_this_run",0))+embedding.calls,
+        "prepared_usage":previous.get("prepared_usage",previous.get("actual_usage_this_run",[]))+embedding.usage,
         "notice":"Factual public catalog, official NASA text chunks and two public smoke-query vectors. No API key or course archive."}
-    manifest=root/"public_data/embedding_manifest.json"
     manifest.write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
     if args.copy_seed_to:
         args.copy_seed_to.mkdir(parents=True,exist_ok=True)
         for path in (seed,manifest):shutil.copy2(path,args.copy_seed_to/path.name)
-    print(json.dumps({k:v for k,v in report.items() if k!="actual_usage_this_run"},ensure_ascii=False),flush=True)
+    print(json.dumps({k:v for k,v in report.items() if k not in {"actual_usage_this_run","prepared_usage"}},ensure_ascii=False),flush=True)
 
 
 if __name__=="__main__":

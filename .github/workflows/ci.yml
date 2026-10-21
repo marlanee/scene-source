@@ -23,7 +23,7 @@ jobs:
       - run: docker build -t scene-source:test .
       - name: Probe public service with 512MB memory
         run: |
-          docker run -d --name demo --memory 512m -p 10000:10000 -e APP_PUBLIC_URL=http://127.0.0.1:10000 -e WIKI_CONTACT=https://github.com/marlanee/scene-source scene-source:test sh -c "python deployment.py check && python deployment.py serve"
+          docker run -d --name demo --memory 512m -p 10000:10000 -e APP_PUBLIC_URL=http://127.0.0.1:10000 -e WIKI_CONTACT=https://github.com/marlanee/scene-source scene-source:test sh -c "python deployment.py check && exec python deployment.py serve"
           python - <<'PY'
           import json,time,urllib.request,http.cookies
           base="http://127.0.0.1:10000"

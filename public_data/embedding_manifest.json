@@ -5,9 +5,11 @@
   "catalog_inputs": 964,
   "official_pdf_inputs": 7,
   "smoke_query_inputs": 2,
-  "sha256": "6e5c4c1a95e2306b732815b6f62cdb048838b074889a81c4e580c03dad5a5620",
-  "actual_gms_calls_this_run": 8,
-  "actual_usage_this_run": [
+  "sha256": "794adfe8bcc6d2f8bc07bb2f857a3c35a2189842b9c4b77c920649228840b285",
+  "actual_gms_calls_this_run": 0,
+  "actual_usage_this_run": [],
+  "prepared_api_calls_total": 8,
+  "prepared_usage": [
     {
       "prompt_tokens": 31034,
       "total_tokens": 31034
