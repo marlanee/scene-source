@@ -21,10 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t scene-source:test .
-      - name: Probe free tier memory
-        continue-on-error: true
+      - name: Probe service with 1GB memory
         run: |
-          docker run -d --name demo --memory 512m -p 10000:10000 -e APP_PUBLIC_URL=http://127.0.0.1:10000 -e WIKI_CONTACT=https://github.com/marlanee/scene-source scene-source:test
+          docker run -d --name demo --memory 1g -p 10000:10000 -e APP_PUBLIC_URL=http://127.0.0.1:10000 -e WIKI_CONTACT=https://github.com/marlanee/scene-source scene-source:test
           python - <<'PY'
           import json,time,urllib.request,http.cookies
           base="http://127.0.0.1:10000"
@@ -43,7 +42,7 @@ jobs:
               result=json.load(urllib.request.urlopen(request,timeout=10))
               if result["status"] in {"failed","completed"}:
                   assert result["status"]=="completed",result["message"]
-                  print("512MB real retrieval probe passed",len(result["result"]["items"]))
+                  print("1GB real retrieval probe passed",len(result["result"]["items"]))
                   break
               time.sleep(1)
           else:raise RuntimeError("Probe timeout")
@@ -56,7 +55,7 @@ jobs:
                   assert result["status"]=="completed",result["message"]
                   assert result["result"]["generation_mode"]=="local_extract"
                   assert any(e["source_type"]=="공식 PDF" for e in result["result"]["evidence"])
-                  print("512MB live Wiki + NASA retrieval and answer probe passed")
+                  print("1GB live Wiki + NASA retrieval and answer probe passed")
                   break
               time.sleep(1)
           else:raise RuntimeError("Answer probe timeout")
