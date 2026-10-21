@@ -1,0 +1,23 @@
+[retrieval]
+chunk_size = 1000
+chunk_overlap = 200
+top_k = 5
+fetch_k = 20
+mmr_lambda = 0.65
+method = "similarity"
+
+[embedding]
+model = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+batch_size = 16
+threads = 4
+
+[collection]
+source_mode = "bundle"
+max_keywords = 4
+max_documents = 5
+request_interval = 0.6
+max_retries = 4
+
+[app]
+title = "Scene & Source"
+tagline = "영화 속 이야기, 근거로 한 걸음 더."

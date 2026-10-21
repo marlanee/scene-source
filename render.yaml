@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: scene-source
+    runtime: docker
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: SCENE_PUBLIC
+        value: "1"
+      - key: GMS_MODEL
+        value: gpt-6-luna
+      - key: GMS_BASE_URL
+        value: https://gms.ssafy.io/gmsapi/api.openai.com/v1/
+      - key: GMS_KEY
+        sync: false
+      - key: WIKI_CONTACT
+        sync: false
+      - key: GMS_DAILY_CALL_LIMIT
+        value: "100"
+      - key: GMS_HOURLY_REQUEST_LIMIT
+        value: "3"

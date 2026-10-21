@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scene & Source — 영화 너머의 사실</title>
+<link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/style.css">
+<script defer src="/assets/app.js?v=3"></script>
+</head>
+<body>
+<a class="skip" href="#main">본문으로 이동</a>
+<aside class="sidebar">
+<a class="brand" href="/" aria-label="Scene and Source 홈"><span class="brand-mark">S<span>↗</span></span><span>SCENE<span class="brand-sub">& SOURCE</span></span></a>
+<div class="side-label">YOUR SCREENING ROOM</div>
+<nav aria-label="주 메뉴">
+<button class="nav active" data-view="chat"><span>◉</span> 작품과 대화 <small>01</small></button>
+<button class="nav" data-view="discover"><span>⌕</span> 영화 탐색 <small>02</small></button>
+<button class="nav" data-view="compare"><span>⇄</span> 검색 실험실 <small>03</small></button>
+<button class="nav" data-view="evaluation"><span>▤</span> 답변 비교·평가 <small>04</small></button>
+<button class="nav" data-view="library"><span>▱</span> 자료실 <small>05</small></button>
+</nav>
+<div class="side-note"><span class="tiny-accent">BEYOND THE SCREEN</span><p>영화의 여운을,<br>근거 있는 이해로.</p><div id="key-status" class="connection">서비스 연결 중</div><button class="quiet" id="connection-help">연결 안내 ↗</button></div>
+</aside>
+<div class="workspace">
+<header class="topbar"><span id="breadcrumb">WORKSPACE <b>/ 작품과 대화</b></span><span class="local-indicator"><i></i> LOCAL WORKSPACE</span></header>
+<main id="main" tabindex="-1">
+<div id="fatal" class="notice error" hidden></div>
+<section class="view" id="view-chat">
+<div class="eyebrow">SCENE NOTES / FACTS & CONTEXT</div>
+<div class="page-heading"><div><h1>영화 너머의 사실을 만나다.</h1><p>궁금했던 장면과 배경, 원문에서 답을 찾아보세요.</p></div><span class="edition">ARCHIVE <b id="movie-count">—</b> FILMS</span></div>
+<div class="film-selector"><label for="movie-search">작품 찾기</label><input id="movie-search" type="search" placeholder="제목·감독으로 검색" autocomplete="off"><label class="sr-only" for="movie-select">대화할 영화</label><select id="movie-select"><option>영화 목록을 불러오는 중</option></select></div>
+<article class="hero"><div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="black-hole"></div><div class="film-grain"></div><span class="art-caption">A CLOSER LOOK AT THE STORY</span></div><div class="hero-content"><span class="pill">NOW EXPLORING</span><div id="film-meta" class="film-meta"></div><h2 id="film-title">작품을 불러오고 있습니다</h2><div id="film-original" class="film-original"></div><p id="film-overview"></p><div id="film-credits" class="film-credits"></div></div></article>
+<div class="chat-grid"><section class="panel conversation"><div class="panel-heading"><div><span class="section-no">01 / CONVERSATION</span><h2>작품에 질문하기</h2></div><button id="clear-history" class="quiet">대화 지우기</button></div>
+<div class="segmented" role="group" aria-label="질문 목적"><button class="selected" data-task="qa">배경 해설</button><button data-task="factcheck">사실 확인</button></div>
+<div id="chat-log" aria-live="polite"></div>
+<form id="chat-form"><label class="sr-only" for="question">영화에 대한 질문</label><textarea id="question" maxlength="1000" rows="3" placeholder="이 영화의 어떤 배경이 궁금한가요?" required></textarea><div class="composer-footer"><span>근거가 부족하면 확인 가능한 범위를 알려드려요.</span><button class="primary" type="submit">질문 보내기 <span>↗</span></button></div></form>
+</section><aside class="panel source-panel"><div class="panel-heading"><div><span class="section-no">02 / EVIDENCE</span><h2>답변을 뒷받침하는 원문</h2></div><span class="source-dot"></span></div><div id="source-list"><div class="empty"><span>▱</span><h3>근거는 여기에 모입니다</h3><p>질문하면 영화 정보와 외부 자료를<br>함께 확인할 수 있어요.</p></div></div><details class="search-settings"><summary>검색·응답 설정</summary><label>응답 방식<select id="response-mode"><option value="local">로컬 원문 검색</option><option value="gms">GMS 답변 생성</option></select></label><label>위키백과 자료<select id="source-mode"><option value="bundle">배포 자료 + 수집한 보완 자료</option><option value="live">실시간 위키백과</option></select></label><label>검색 방식<select id="method"><option value="mmr">MMR · 관련성과 다양성</option><option value="similarity">유사도 · 관련성 우선</option></select></label><label class="inline-check"><input type="checkbox" id="hybrid" checked> 키워드로 검색 보완 (BM25)</label><p>연결한 PDF는 해당 영화의 검색에 함께 사용합니다.</p></details></aside></div>
+</section>
+<section class="view" id="view-discover" hidden><div class="eyebrow">DISCOVER / YOUR NEXT STORY</div><h1>다음 이야기를 찾아서.</h1><p class="lead">보고 싶은 영화의 조건을 편하게 적어주세요.</p><form id="discover-form" class="panel search-form"><label for="discover-query">어떤 영화를 찾고 있나요?</label><div class="input-action"><input id="discover-query" maxlength="1000" value="2010년 이후 한국 영화 중 130분 이하인 스릴러" required><button class="primary">영화 찾기 ↗</button></div><p>로컬 모드에서는 연도·상영시간·장르 조건을 확인합니다. 주제와 분위기의 최종 적합성은 GMS 연결 후 검증합니다.</p></form><div id="discover-results"></div></section>
+<section class="view" id="view-compare" hidden><div class="eyebrow">SEARCH LAB / RELEVANCE × DIVERSITY</div><h1>같은 질문, 다른 근거.</h1><p class="lead">유사도 검색과 MMR이 고른 문서를 같은 조건에서 비교합니다.</p><div class="context-strip" id="compare-movie"></div><form id="compare-form" class="panel search-form"><label for="compare-query">비교할 질문</label><input id="compare-query" maxlength="1000" value="블랙홀의 사건의 지평선은 무엇인가요?" required><div class="experiment-controls"><label>외부 근거 수 (Top-k)<input id="top-k" type="number" min="1" max="20" value="5"></label><label>후보 수 (fetch-k)<input id="fetch-k" type="number" min="1" max="100" value="20"></label><label>MMR 관련성 비중 <output id="lambda-value">0.65</output><input id="mmr-lambda" type="range" min="0" max="1" step=".05" value=".65"></label><button class="primary">검색 비교하기 ⇄</button></div><p>비중이 낮을수록 서로 다른 내용을 우선합니다. 메타데이터 1개는 외부 근거 수와 별도로 항상 포함합니다.</p></form><label class="inline-check"><input type="checkbox" id="compare-hybrid" checked> 두 검색 방식에 같은 키워드 보완 적용</label><div id="compare-results"></div></section>
+<section class="view" id="view-evaluation" hidden><div class="eyebrow">EVALUATION / EVIDENCE MAKES A DIFFERENCE?</div><h1>근거가 답변을 바꿀까요?</h1><p class="lead">동일한 모델·질문·공통 지침으로 RAG 사용 전후를 비교하고, 원문을 보고 직접 평가하세요.</p><div id="evaluation-gate"></div><form id="evaluation-form" class="panel search-form"><h2>실험 질문 선택</h2><div id="evaluation-cases"></div><div class="form-bottom"><p>질문당 답변 생성 2회가 발생합니다. 실패 시 완료한 응답은 보존하며 다시 이어서 실행할 수 있습니다.</p><button id="run-evaluation" class="primary">선택 질문 실제 비교 ↗</button></div></form><div class="panel rubric"><h2>사람 평가 기준 · 각 0–2점</h2><p>정확성: 중요한 사실 오류 → 부분 정확 → 정확한 답변<br>근거 지지: 불일치·가짜 → 일부 지지 → 주요 주장 지지<br>불확실성 처리: 없는 사실 단정 → 모호 → 확인 범위와 한계를 적절히 설명</p><p>미평가는 0점으로 계산하지 않습니다. 인용 번호의 존재만으로 사실 정확성을 판정하지 않습니다.</p></div><div id="evaluation-runs"></div></section>
+<section class="view" id="view-library" hidden><div class="eyebrow">SOURCE LIBRARY / GO TO THE ORIGINAL</div><h1>이야기의 바깥에서.</h1><p class="lead">위키백과와 PDF 원문을 연결해, 한 가지 출처를 넘어 조사합니다.</p><div class="context-strip" id="library-movie"></div><div class="library-grid"><div><section class="panel"><span class="section-no">CURATED SOURCE</span><h2>NASA · 블랙홀 필드 가이드</h2><p>블랙홀의 구조와 관측 방법을 다룬 공식 영문 PDF입니다. 인터스텔라의 과학 배경 자료로 연결합니다.</p><a class="text-link" href="https://science.nasa.gov/resource/a-field-guide-to-black-holes-booklet/" target="_blank" rel="noreferrer">NASA 자료 소개 ↗</a><button id="import-nasa" class="primary full">인터스텔라에 공식 PDF 연결</button><p class="muted">영화의 장면 자체를 입증하는 자료는 아닙니다.</p></section><div id="library-sources"></div></div><form id="upload-form" class="panel search-form"><span class="section-no">ADD YOUR SOURCE</span><h2>선택한 영화에 PDF 추가</h2><p>텍스트가 포함된 PDF, 최대 10MB·100쪽. 문서 제목과 발행기관은 출처 표시용이며 신뢰성을 자동 인증하지 않습니다.</p><label>문서 제목<input id="pdf-title" maxlength="200" required placeholder="예: 블랙홀 관측 연구 보고서"></label><label>발행기관·저자<input id="pdf-publisher" maxlength="200" required placeholder="실제 원문에 표시된 발행 주체"></label><label>PDF 파일<input id="pdf-file" type="file" accept=".pdf,application/pdf" required></label><button class="primary">이 영화의 자료로 저장 ↗</button><p class="muted">자료는 이 컴퓨터에 저장됩니다. 삭제하면 검색 색인에서도 제거됩니다.</p></form></div></section>
+<div class="progress" id="progress" role="status" hidden><span class="spinner"></span><span id="progress-text">작업 중</span><span class="elapsed" id="elapsed"></span></div>
+</main><footer>SCENE & SOURCE <span>원문을 확인하는 습관, 더 깊어지는 영화.</span><a href="/assets/credits.html" target="_blank" rel="noreferrer">출처·이용 안내 ↗</a><a href="/docs" target="_blank" rel="noreferrer">API 문서 ↗</a></footer>
+</div>
+<dialog id="help"><h2>GMS 연결 안내</h2><p>현재는 실제 문서 검색과 원문 발췌를 사용할 수 있습니다. AI의 사실 판정과 답변 전후 비교는 GMS 키 연결이 필요합니다.</p><p>프로젝트의 <code>.env</code>에 <code>GMS_KEY</code>를 입력한 뒤 웹 서버를 재시작하세요. 키는 화면이나 브라우저에 입력하지 않습니다.</p><button id="close-help" class="primary">확인</button></dialog>
+</body></html>

@@ -1,0 +1,15 @@
+.git
+.venv
+.env*
+__pycache__
+.pytest_cache
+data
+tests
+docs
+logs
+submission
+*.zip
+*.log
+build_package.py
+export_public.py
+verify_*.py

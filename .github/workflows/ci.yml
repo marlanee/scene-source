@@ -1,0 +1,53 @@
+name: Verify
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-service.txt pytest
+      - run: python -m compileall -q scene_source
+      - run: node --check web/app.js
+      - run: pytest tests/test_core.py tests/test_gms_contract.py tests/test_advanced.py tests/test_finish.py -q
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t scene-source:test .
+      - name: Probe free tier memory
+        continue-on-error: true
+        run: |
+          docker run -d --name demo --memory 512m -p 10000:10000 -e APP_PUBLIC_URL=http://127.0.0.1:10000 scene-source:test
+          python - <<'PY'
+          import json,time,urllib.request,http.cookies
+          base="http://127.0.0.1:10000"
+          for _ in range(60):
+              try:
+                  urllib.request.urlopen(base+"/healthz",timeout=2)
+                  break
+              except Exception:time.sleep(1)
+          req=urllib.request.Request(base+"/api/jobs",data=json.dumps({"action":"discover","question":"2010년 이후 한국 영화 중 130분 이하인 스릴러","mode":"local"}).encode(),headers={"Content-Type":"application/json"})
+          response=urllib.request.urlopen(req,timeout=15)
+          cookies=http.cookies.SimpleCookie();cookies.load(response.headers.get("Set-Cookie",""))
+          cookie=cookies["scene_visitor"].value
+          job=json.load(response)["id"]
+          for _ in range(90):
+              request=urllib.request.Request(base+"/api/jobs/"+job,headers={"Cookie":"scene_visitor="+cookie})
+              result=json.load(urllib.request.urlopen(request,timeout=10))
+              if result["status"] in {"failed","completed"}:
+                  assert result["status"]=="completed",result["message"]
+                  print("512MB real retrieval probe passed",len(result["result"]["items"]))
+                  break
+              time.sleep(1)
+          else:raise RuntimeError("Probe timeout")
+          PY
+          docker stats --no-stream --format "{{.MemUsage}}" demo
+      - if: always()
+        run: docker logs demo || true
